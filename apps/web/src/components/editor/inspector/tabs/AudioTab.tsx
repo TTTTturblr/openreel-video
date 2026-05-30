@@ -50,7 +50,6 @@ export const AudioTab: React.FC<AudioTabProps> = ({
       )}
       {showAudioEffects && (
         <>
-          <div data-inspector-tab="audio" />
           <InspectorSection
             title="Audio Effects"
             sectionId="audio-effects"

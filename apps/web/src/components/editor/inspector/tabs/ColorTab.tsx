@@ -15,7 +15,6 @@ export const ColorTab: React.FC<ColorTabProps> = ({
     <>
       {showColorGrading && (
         <>
-          <div data-inspector-tab="adjust" />
           <InspectorSection
             title="Color Grading"
             sectionId="color-grading"

@@ -37,7 +37,6 @@ export const TransformTab: React.FC<TransformTabProps> = ({
     <>
       {showTransformControls && (
         <>
-          <div data-inspector-tab="video" />
           <InspectorSection title="Transform" sectionId="transform">
             <div className="space-y-3">
               <LabeledSlider

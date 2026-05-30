@@ -22,7 +22,6 @@ export const AnimateTab: React.FC<AnimateTabProps> = ({
 }) => {
   return (
     <>
-      <div data-inspector-tab="animation" />
       <InspectorSection title="Keyframes" sectionId="keyframes">
         <KeyframesSection clipId={clipId} />
       </InspectorSection>

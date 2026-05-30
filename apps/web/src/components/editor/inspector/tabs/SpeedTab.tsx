@@ -26,7 +26,6 @@ export const SpeedTab: React.FC<SpeedTabProps> = ({
         !selectedClip.mediaId.startsWith("svg-") &&
         !selectedClip.mediaId.startsWith("sticker-") && (
           <>
-            <div data-inspector-tab="speed" />
             <InspectorSection
               title="Speed & Direction"
               sectionId="speed"

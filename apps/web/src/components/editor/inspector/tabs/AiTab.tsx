@@ -73,7 +73,6 @@ export const AiTab: React.FC<AiTabProps> = ({
     <>
       {clipType === "video" && (
         <>
-          <div data-inspector-tab="ai-stylize" />
           <InspectorSection
             title="AI Auto-Captions"
             sectionId="auto-captions"
