@@ -91,6 +91,8 @@ import {
 } from "./inspector/clip-tabs.config";
 import { InspectorTabs } from "./inspector/shell/InspectorTabs";
 import { InspectorClipHeader } from "./inspector/shell/InspectorClipHeader";
+import { InspectorTabPanel } from "./inspector/shell/InspectorTabPanel";
+import { InspectorTabErrorBoundary } from "./inspector/shell/InspectorTabErrorBoundary";
 
 // Initialize engines as singletons
 const chromaKeyEngine = new ChromaKeyEngine({ width: 1920, height: 1080 });
@@ -965,7 +967,8 @@ export const InspectorPanel: React.FC = () => {
       <div className="overflow-y-auto flex-1 min-h-0 pb-3.5 custom-scrollbar">
       <div className="px-4 pt-3">
         {selectedClip ? (
-          <>
+          <InspectorTabErrorBoundary key={activeTab}>
+            <InspectorTabPanel tab="effects" active={activeTab}>
             {showVideoControls && selectedTimelineClip && (appliedEditingTemplates.length > 0 || (selectedTimelineClip.effects && selectedTimelineClip.effects.length > 0)) && (
               <Section
                 title={`Applied (${appliedEditingTemplates.length + (selectedTimelineClip.effects?.filter((e: { metadata?: { templateSource?: unknown } }) => !e.metadata?.templateSource).length || 0)})`}
@@ -1112,7 +1115,9 @@ export const InspectorPanel: React.FC = () => {
                 </div>
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="ai" active={activeTab}>
             {clipType === "video" && (
               <>
               <div data-inspector-tab="ai-stylize" />
@@ -1230,46 +1235,60 @@ export const InspectorPanel: React.FC = () => {
               </Section>
               </>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="effects" active={activeTab}>
             {clipType === "video" && (
               <Section title="Background Removal" sectionId="background-removal" defaultOpen={false}>
                 <BackgroundRemovalSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="ai" active={activeTab}>
             {clipType === "video" && (
               <Section title="Auto Reframe" sectionId="auto-reframe" defaultOpen={false}>
                 <AutoReframeSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="audio" active={activeTab}>
             {showAudioEffects && (
               <Section title="Auto Cut Silence" sectionId="auto-cut-silence" defaultOpen={false}>
                 <AutoCutSilenceSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="audio" active={activeTab}>
             {/* Beat Sync - Sync other clips to this audio's beats */}
             {clipType === "audio" && (
               <Section title="Beat Sync" sectionId="beat-sync" defaultOpen={false}>
                 <AudioTextSyncPanel clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="ai" active={activeTab}>
             {/* Auto-Edit - Cut video clips to audio beats */}
             {showAudioEffects && (
               <Section title="Beat-Synced Auto-Edit" sectionId="auto-edit" defaultOpen={false}>
                 <AutoEditPanel onClose={() => {}} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="ai" active={activeTab}>
             {/* AI Highlight Extractor */}
             {showAudioEffects && (
               <Section title="AI Highlights" sectionId="ai-highlights" defaultOpen={false}>
                 <HighlightExtractorPanel clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="transform" active={activeTab}>
             {/* Transform */}
             {showTransformControls && (
               <>
@@ -1395,7 +1414,9 @@ export const InspectorPanel: React.FC = () => {
               </Section>
               </>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="transform" active={activeTab}>
             {/* Crop */}
             {showVideoControls &&
               selectedClip &&
@@ -1407,7 +1428,9 @@ export const InspectorPanel: React.FC = () => {
                   <CropSection clip={selectedClip as Clip} />
                 </Section>
               )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="speed" active={activeTab}>
             {/* Speed & Direction */}
             {showVideoControls &&
               selectedClip &&
@@ -1426,7 +1449,9 @@ export const InspectorPanel: React.FC = () => {
                 </Section>
                 </>
               )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="speed" active={activeTab}>
             {/* Stabilization */}
             {showVideoControls &&
               selectedClip &&
@@ -1442,7 +1467,9 @@ export const InspectorPanel: React.FC = () => {
                   <StabilizationSection clip={selectedClip as Clip} />
                 </Section>
               )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="speed" active={activeTab}>
             {/* Speed Curves */}
             {showVideoControls &&
               selectedClip &&
@@ -1458,7 +1485,9 @@ export const InspectorPanel: React.FC = () => {
                   <SpeedRampSection clip={selectedClip as Clip} />
                 </Section>
               )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="transform" active={activeTab}>
             {/* Alignment - Position element on canvas */}
             {(clipType === "video" ||
               clipType === "image" ||
@@ -1474,7 +1503,9 @@ export const InspectorPanel: React.FC = () => {
                 <AlignmentSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="transform" active={activeTab}>
             {/* Blending - Layer compositing blend modes */}
             {(clipType === "video" ||
               clipType === "image" ||
@@ -1490,7 +1521,9 @@ export const InspectorPanel: React.FC = () => {
                 <BlendingSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="transform" active={activeTab}>
             {/* 3D Transforms - After Effects-style 3D rotation */}
             {(clipType === "video" ||
               clipType === "image" ||
@@ -1506,13 +1539,17 @@ export const InspectorPanel: React.FC = () => {
                 <Transform3DSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="animate" active={activeTab}>
             {/* Keyframes - Using KeyframeEngine */}
             <div data-inspector-tab="animation" />
             <Section title="Keyframes" sectionId="keyframes">
               <KeyframesSection clipId={clipId} />
             </Section>
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="animate" active={activeTab}>
             {/* Entry/Exit Transitions - For all visual clips */}
             {(clipType === "video" ||
               clipType === "image" ||
@@ -1528,7 +1565,9 @@ export const InspectorPanel: React.FC = () => {
                 <ClipTransitionSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="animate" active={activeTab}>
             {/* Motion Presets - Advanced animation presets */}
             {(clipType === "video" ||
               clipType === "image" ||
@@ -1543,7 +1582,9 @@ export const InspectorPanel: React.FC = () => {
                 <MotionPresetsPanel clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="animate" active={activeTab}>
             {/* Motion Path - Animate position along a path */}
             {(clipType === "video" ||
               clipType === "image" ||
@@ -1559,7 +1600,9 @@ export const InspectorPanel: React.FC = () => {
                 <MotionPathSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="effects" active={activeTab}>
             {/* Particle Effects - Visual particle systems */}
             {(clipType === "video" ||
               clipType === "image" ||
@@ -1580,7 +1623,9 @@ export const InspectorPanel: React.FC = () => {
                   />
                 </Section>
               )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="animate" active={activeTab}>
             {/* Emphasis Animation - Looping animations while clip is visible */}
             {(clipType === "video" ||
               clipType === "image" ||
@@ -1596,7 +1641,9 @@ export const InspectorPanel: React.FC = () => {
                 <EmphasisAnimationSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="effects" active={activeTab}>
             {/* Chroma Key - Using ChromaKeyEngine - Only for video/image */}
             {showVideoControls && (
               <Section title="Chroma Key (Green Screen)">
@@ -1635,19 +1682,26 @@ export const InspectorPanel: React.FC = () => {
               </Section>
             )}
 
+            </InspectorTabPanel>
+
+            <InspectorTabPanel tab="effects" active={activeTab}>
             {/* Motion Tracking - Using MotionTrackingEngine - Only for video/image */}
             {showVideoControls && (
               <Section title="Motion Tracking" sectionId="motion-tracking">
                 <MotionTrackingSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="effects" active={activeTab}>
             {showVideoEffects && (
               <Section title="Video Effects" sectionId="video-effects">
                 <VideoEffectsSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="effects" active={activeTab}>
             {showVideoEffects && (
               <Section
                 title="Green Screen"
@@ -1657,7 +1711,9 @@ export const InspectorPanel: React.FC = () => {
                 <GreenScreenSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="effects" active={activeTab}>
             {/* Picture-in-Picture Section */}
             {showVideoControls && (
               <Section
@@ -1668,25 +1724,33 @@ export const InspectorPanel: React.FC = () => {
                 <PiPSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="effects" active={activeTab}>
             {showVideoControls && (
               <Section title="Masking" sectionId="masking" defaultOpen={false}>
                 <MaskSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="effects" active={activeTab}>
             {showVideoControls && (
               <Section title="Nested Sequences" defaultOpen={false}>
                 <NestedSequenceSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="effects" active={activeTab}>
             {showVideoControls && (
               <Section title="Adjustment Layers" defaultOpen={false}>
                 <AdjustmentLayerSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="color" active={activeTab}>
             {showColorGrading && (
               <>
               <div data-inspector-tab="adjust" />
@@ -1699,7 +1763,9 @@ export const InspectorPanel: React.FC = () => {
               </Section>
               </>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="audio" active={activeTab}>
             {showAudioEffects && (
               <Section
                 title={noiseReductionSectionTitle}
@@ -1709,7 +1775,9 @@ export const InspectorPanel: React.FC = () => {
                 <NoiseReductionSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="audio" active={activeTab}>
             {showAudioEffects && (
               <>
               <div data-inspector-tab="audio" />
@@ -1722,7 +1790,9 @@ export const InspectorPanel: React.FC = () => {
               </Section>
               </>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="audio" active={activeTab}>
             {showAudioEffects && (
               <Section
                 title="Audio Ducking"
@@ -1732,13 +1802,17 @@ export const InspectorPanel: React.FC = () => {
                 <AudioDuckingSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="style" active={activeTab}>
             {showTextSection && (
               <Section title="Text Properties" sectionId="text-properties">
                 <TextSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="animate" active={activeTab}>
             {showTextSection && (
               <Section
                 title="Text Animation"
@@ -1748,7 +1822,9 @@ export const InspectorPanel: React.FC = () => {
                 <TextAnimationSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="effects" active={activeTab}>
             {showTextSection && (
               <Section
                 title="Text Behind Subject"
@@ -1758,20 +1834,26 @@ export const InspectorPanel: React.FC = () => {
                 <BehindSubjectSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="style" active={activeTab}>
             {showShapeSection && (
               <Section title="Shape Properties" sectionId="shape-properties">
                 <ShapeSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="style" active={activeTab}>
             {/* SVG Section */}
             {showSVGSection && (
               <Section title="SVG Properties">
                 <SVGSection clipId={clipId} />
               </Section>
             )}
+            </InspectorTabPanel>
 
+            <InspectorTabPanel tab="ai" active={activeTab}>
             {/* Quick Actions - Only show when there are actions available */}
             {(showVideoControls || showAudioEffects || showVideoEffects) && (
               <div className="border border-primary/30 bg-primary/5 rounded-xl p-4 relative overflow-hidden">
@@ -1833,7 +1915,8 @@ export const InspectorPanel: React.FC = () => {
                 </div>
               </div>
             )}
-          </>
+            </InspectorTabPanel>
+          </InspectorTabErrorBoundary>
         ) : selectedSubtitle ? (
           <>
             {/* Subtitle Info */}
