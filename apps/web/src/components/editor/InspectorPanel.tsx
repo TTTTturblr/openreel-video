@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Zap, Captions, Loader2, Sparkles, Trash2, Upload } from "lucide-react";
+import { Zap, Captions, Loader2, Upload } from "lucide-react";
 import { useProjectStore } from "../../stores/project-store";
 import { useTimelineStore } from "../../stores/timeline-store";
 import { useUIStore } from "../../stores/ui-store";
@@ -12,30 +12,12 @@ import {
   type CaptionAnimationStyle,
   CAPTION_ANIMATION_STYLES,
   getAnimationStyleDisplayName,
-  getParticleEngine,
-  type ParticleEffect,
-  type ParticleConfig,
 } from "@openreel/core";
-import {
-  VideoEffectsSection,
-  GreenScreenSection,
-  PiPSection,
-  MaskSection,
-  MotionTrackingSection,
-  NestedSequenceSection,
-  AdjustmentLayerSection,
-  BackgroundRemovalSection,
-  AutoReframeSection,
-  ParticleEffectsSection,
-  BehindSubjectSection,
-} from "./inspector";
+import { AutoReframeSection } from "./inspector";
 import { OPENREEL_TRANSCRIBE_URL } from "../../config/api-endpoints";
 import { AutoEditPanel } from "./panels/AutoEditPanel";
 import { HighlightExtractorPanel } from "./panels/HighlightExtractorPanel";
-import {
-  EditingTemplateControls,
-  mergeEditingTemplateControlValues,
-} from "./panels/EditingTemplateControls";
+import { mergeEditingTemplateControlValues } from "./panels/EditingTemplateControls";
 import {
   getAudioBridgeEffects,
   initializeAudioBridgeEffects,
@@ -51,8 +33,6 @@ import {
 import { getNoiseReductionPreset } from "./inspector/noise-reduction-presets";
 import {
   Input,
-  LabeledSlider,
-  Switch,
   Select,
   SelectTrigger,
   SelectValue,
@@ -78,6 +58,7 @@ import { TransformTab } from "./inspector/tabs/TransformTab";
 import { SpeedTab } from "./inspector/tabs/SpeedTab";
 import { AnimateTab } from "./inspector/tabs/AnimateTab";
 import { StyleTab } from "./inspector/tabs/StyleTab";
+import { EffectsTab } from "./inspector/tabs/EffectsTab";
 
 // Initialize engines as singletons
 const chromaKeyEngine = new ChromaKeyEngine({ width: 1920, height: 1080 });
@@ -92,74 +73,6 @@ const EmptyState: React.FC = () => (
     </p>
   </div>
 );
-
-const ParticleEffectsSectionWrapper: React.FC<{
-  clipId: string;
-  clipDuration: number;
-  clipStartTime: number;
-}> = ({ clipId, clipDuration, clipStartTime }) => {
-  const [updateTrigger, setUpdateTrigger] = React.useState(0);
-  const particleEngine = React.useMemo(() => getParticleEngine(), []);
-
-  const effects = React.useMemo(() => {
-    return particleEngine.getEffectsForClip(clipId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clipId, particleEngine, updateTrigger]);
-
-  const handleAddEffect = React.useCallback(
-    (effect: ParticleEffect) => {
-      particleEngine.addEffect(effect);
-      setUpdateTrigger((v) => v + 1);
-    },
-    [particleEngine]
-  );
-
-  const handleUpdateEffect = React.useCallback(
-    (effectId: string, config: Partial<ParticleConfig>) => {
-      particleEngine.updateEffect(effectId, config);
-      setUpdateTrigger((v) => v + 1);
-    },
-    [particleEngine]
-  );
-
-  const handleRemoveEffect = React.useCallback(
-    (effectId: string) => {
-      particleEngine.removeEffect(effectId);
-      setUpdateTrigger((v) => v + 1);
-    },
-    [particleEngine]
-  );
-
-  const handleToggleEffect = React.useCallback(
-    (effectId: string, enabled: boolean) => {
-      particleEngine.toggleEffect(effectId, enabled);
-      setUpdateTrigger((v) => v + 1);
-    },
-    [particleEngine]
-  );
-
-  const handleUpdateTiming = React.useCallback(
-    (effectId: string, startTime: number, duration: number) => {
-      particleEngine.updateEffectTiming(effectId, startTime, duration);
-      setUpdateTrigger((v) => v + 1);
-    },
-    [particleEngine]
-  );
-
-  return (
-    <ParticleEffectsSection
-      clipId={clipId}
-      clipDuration={clipDuration}
-      clipStartTime={clipStartTime}
-      effects={effects}
-      onAddEffect={handleAddEffect}
-      onUpdateEffect={handleUpdateEffect}
-      onRemoveEffect={handleRemoveEffect}
-      onToggleEffect={handleToggleEffect}
-      onUpdateTiming={handleUpdateTiming}
-    />
-  );
-};
 
 export const InspectorPanel: React.FC = () => {
   // Stores
@@ -925,152 +838,32 @@ export const InspectorPanel: React.FC = () => {
         {selectedClip ? (
           <InspectorTabErrorBoundary key={activeTab}>
             <InspectorTabPanel tab="effects" active={activeTab}>
-            {showVideoControls && selectedTimelineClip && (appliedEditingTemplates.length > 0 || (selectedTimelineClip.effects && selectedTimelineClip.effects.length > 0)) && (
-              <Section
-                title={`Applied (${appliedEditingTemplates.length + (selectedTimelineClip.effects?.filter((e: { metadata?: { templateSource?: unknown } }) => !e.metadata?.templateSource).length || 0)})`}
-                sectionId="applied-effects"
-                defaultOpen={true}
-              >
-                <div className="space-y-2">
-                  {appliedEditingTemplates.map((application) => {
-                    const template = getEditingTemplate(application.templateId);
-                    const canEdit = Boolean(template?.controls?.length);
-                    const isExpanded =
-                      expandedRecipeApplicationId === application.applicationId;
-                    const currentControlValues = template
-                      ? recipeControlValues[application.applicationId] ||
-                        mergeEditingTemplateControlValues(
-                          template,
-                          application.controlValues,
-                        )
-                      : undefined;
-
-                    return (
-                      <div
-                        key={application.applicationId}
-                        className="rounded-lg border border-border bg-background-tertiary/70 px-2.5 py-2"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="min-w-0 flex-1 flex items-center gap-2">
-                            <Sparkles size={11} className="text-primary shrink-0" />
-                            <p className="truncate text-[11px] font-medium text-text-primary">
-                              {application.name}
-                            </p>
-                            <span className="text-[9px] text-text-muted capitalize shrink-0">
-                              {application.category?.replace(/-/g, " ") || "recipe"}
-                            </span>
-                          </div>
-                          <div className="flex shrink-0 gap-1">
-                            {canEdit && (
-                              <button
-                                onClick={() =>
-                                  handleToggleRecipeControls(
-                                    application.applicationId,
-                                    application.templateId,
-                                    application.controlValues,
-                                  )
-                                }
-                                className={`h-6 px-1.5 rounded text-[9px] font-medium transition-colors ${
-                                  isExpanded
-                                    ? "bg-primary/15 text-primary"
-                                    : "text-text-muted hover:text-text-primary"
-                                }`}
-                              >
-                                Edit
-                              </button>
-                            )}
-                            <button
-                              onClick={() => {
-                                const removed = removeEditingTemplateApplication(
-                                  selectedTimelineClip.id,
-                                  application.applicationId,
-                                );
-                                if (!removed) {
-                                  toast.error("Could not remove recipe", "The recipe could not be removed from this clip.");
-                                  return;
-                                }
-                                setRecipeControlValues((current) => {
-                                  const next = { ...current };
-                                  delete next[application.applicationId];
-                                  return next;
-                                });
-                                if (expandedRecipeApplicationId === application.applicationId) {
-                                  setExpandedRecipeApplicationId(null);
-                                }
-                              }}
-                              className="h-6 px-1.5 rounded text-text-muted hover:text-red-400 transition-colors"
-                            >
-                              <Trash2 size={11} />
-                            </button>
-                          </div>
-                        </div>
-
-                        {isExpanded && template && currentControlValues && (
-                          <div className="mt-2 space-y-3 rounded-lg border border-border/80 bg-background-secondary/80 p-2.5">
-                            <EditingTemplateControls
-                              template={template}
-                              values={currentControlValues}
-                              onChange={(controlId, value) =>
-                                handleRecipeControlChange(
-                                  application.applicationId,
-                                  controlId,
-                                  value,
-                                )
-                              }
-                            />
-                            <div className="flex justify-end gap-1.5">
-                              <button
-                                onClick={() =>
-                                  handleResetRecipeControls(
-                                    application.applicationId,
-                                    application.templateId,
-                                    application.controlValues,
-                                  )
-                                }
-                                className="h-6 px-2.5 rounded border border-border text-[9px] font-medium text-text-secondary hover:text-text-primary transition-colors"
-                              >
-                                Reset
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handleUpdateRecipeControls(
-                                    application.applicationId,
-                                    application.templateId,
-                                    application.controlValues,
-                                  )
-                                }
-                                className="h-6 px-2.5 rounded bg-primary text-[9px] font-semibold text-black hover:bg-primary/85 transition-colors"
-                              >
-                                Update
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-
-                  {selectedTimelineClip.effects
-                    ?.filter((e: { metadata?: { templateSource?: unknown } }) => !e.metadata?.templateSource)
-                    .map((effect: { id: string; type: string; enabled?: boolean }) => (
-                      <div
-                        key={effect.id}
-                        className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background-tertiary/70 px-2.5 py-2"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <Zap size={11} className="text-amber-400 shrink-0" />
-                          <p className="truncate text-[11px] font-medium text-text-primary capitalize">
-                            {effect.type.replace(/-/g, " ")}
-                          </p>
-                        </div>
-                        <span className={`text-[9px] font-medium ${effect.enabled !== false ? "text-green-400" : "text-text-muted"}`}>
-                          {effect.enabled !== false ? "On" : "Off"}
-                        </span>
-                      </div>
-                    ))}
-                </div>
-              </Section>
-            )}
+              <EffectsTab
+                clipId={clipId}
+                clipType={clipType}
+                selectedClip={selectedClip}
+                selectedTimelineClip={selectedTimelineClip}
+                showVideoControls={showVideoControls}
+                showVideoEffects={showVideoEffects}
+                showTextSection={showTextSection}
+                appliedEditingTemplates={appliedEditingTemplates}
+                getEditingTemplate={getEditingTemplate}
+                removeEditingTemplateApplication={removeEditingTemplateApplication}
+                expandedRecipeApplicationId={expandedRecipeApplicationId}
+                setExpandedRecipeApplicationId={setExpandedRecipeApplicationId}
+                recipeControlValues={recipeControlValues}
+                setRecipeControlValues={setRecipeControlValues}
+                handleRecipeControlChange={handleRecipeControlChange}
+                handleToggleRecipeControls={handleToggleRecipeControls}
+                handleResetRecipeControls={handleResetRecipeControls}
+                handleUpdateRecipeControls={handleUpdateRecipeControls}
+                chromaKeyEnabled={chromaKeyEnabled}
+                keyColor={keyColor}
+                tolerance={tolerance}
+                handleChromaKeyToggle={handleChromaKeyToggle}
+                handleKeyColorChange={handleKeyColorChange}
+                handleToleranceChange={handleToleranceChange}
+              />
             </InspectorTabPanel>
 
             <InspectorTabPanel tab="ai" active={activeTab}>
@@ -1193,14 +986,6 @@ export const InspectorPanel: React.FC = () => {
             )}
             </InspectorTabPanel>
 
-            <InspectorTabPanel tab="effects" active={activeTab}>
-            {clipType === "video" && (
-              <Section title="Background Removal" sectionId="background-removal" defaultOpen={false}>
-                <BackgroundRemovalSection clipId={clipId} />
-              </Section>
-            )}
-            </InspectorTabPanel>
-
             <InspectorTabPanel tab="ai" active={activeTab}>
             {clipType === "video" && (
               <Section title="Auto Reframe" sectionId="auto-reframe" defaultOpen={false}>
@@ -1264,136 +1049,6 @@ export const InspectorPanel: React.FC = () => {
               />
             </InspectorTabPanel>
 
-            <InspectorTabPanel tab="effects" active={activeTab}>
-            {/* Particle Effects - Visual particle systems */}
-            {(clipType === "video" ||
-              clipType === "image" ||
-              clipType === "text" ||
-              clipType === "shape" ||
-              clipType === "svg" ||
-              clipType === "sticker") &&
-              selectedClip && (
-                <Section
-                  title="Particle Effects"
-                  sectionId="particle-effects"
-                  defaultOpen={false}
-                >
-                  <ParticleEffectsSectionWrapper
-                    clipId={clipId}
-                    clipDuration={selectedClip.duration}
-                    clipStartTime={selectedClip.startTime}
-                  />
-                </Section>
-              )}
-            </InspectorTabPanel>
-
-            <InspectorTabPanel tab="effects" active={activeTab}>
-            {/* Chroma Key - Using ChromaKeyEngine - Only for video/image */}
-            {showVideoControls && (
-              <Section title="Chroma Key (Green Screen)">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-text-secondary">
-                      Enable
-                    </span>
-                    <Switch
-                      checked={chromaKeyEnabled}
-                      onCheckedChange={handleChromaKeyToggle}
-                    />
-                  </div>
-                  {chromaKeyEnabled && (
-                    <>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-text-secondary">
-                          Key Color
-                        </span>
-                        <input
-                          type="color"
-                          value={keyColor}
-                          onChange={(e) => handleKeyColorChange(e.target.value)}
-                          className="w-8 h-6 rounded border border-border cursor-pointer"
-                        />
-                      </div>
-                      <LabeledSlider
-                        label="Tolerance"
-                        value={tolerance}
-                        onChange={handleToleranceChange}
-                        unit="%"
-                      />
-                    </>
-                  )}
-                </div>
-              </Section>
-            )}
-
-            </InspectorTabPanel>
-
-            <InspectorTabPanel tab="effects" active={activeTab}>
-            {/* Motion Tracking - Using MotionTrackingEngine - Only for video/image */}
-            {showVideoControls && (
-              <Section title="Motion Tracking" sectionId="motion-tracking">
-                <MotionTrackingSection clipId={clipId} />
-              </Section>
-            )}
-            </InspectorTabPanel>
-
-            <InspectorTabPanel tab="effects" active={activeTab}>
-            {showVideoEffects && (
-              <Section title="Video Effects" sectionId="video-effects">
-                <VideoEffectsSection clipId={clipId} />
-              </Section>
-            )}
-            </InspectorTabPanel>
-
-            <InspectorTabPanel tab="effects" active={activeTab}>
-            {showVideoEffects && (
-              <Section
-                title="Green Screen"
-                sectionId="green-screen"
-                defaultOpen={false}
-              >
-                <GreenScreenSection clipId={clipId} />
-              </Section>
-            )}
-            </InspectorTabPanel>
-
-            <InspectorTabPanel tab="effects" active={activeTab}>
-            {/* Picture-in-Picture Section */}
-            {showVideoControls && (
-              <Section
-                title="Picture-in-Picture"
-                sectionId="pip"
-                defaultOpen={false}
-              >
-                <PiPSection clipId={clipId} />
-              </Section>
-            )}
-            </InspectorTabPanel>
-
-            <InspectorTabPanel tab="effects" active={activeTab}>
-            {showVideoControls && (
-              <Section title="Masking" sectionId="masking" defaultOpen={false}>
-                <MaskSection clipId={clipId} />
-              </Section>
-            )}
-            </InspectorTabPanel>
-
-            <InspectorTabPanel tab="effects" active={activeTab}>
-            {showVideoControls && (
-              <Section title="Nested Sequences" defaultOpen={false}>
-                <NestedSequenceSection clipId={clipId} />
-              </Section>
-            )}
-            </InspectorTabPanel>
-
-            <InspectorTabPanel tab="effects" active={activeTab}>
-            {showVideoControls && (
-              <Section title="Adjustment Layers" defaultOpen={false}>
-                <AdjustmentLayerSection clipId={clipId} />
-              </Section>
-            )}
-            </InspectorTabPanel>
-
             <InspectorTabPanel tab="color" active={activeTab}>
               <ColorTab clipId={clipId} showColorGrading={showColorGrading} />
             </InspectorTabPanel>
@@ -1405,18 +1060,6 @@ export const InspectorPanel: React.FC = () => {
                 showShapeSection={showShapeSection}
                 showSVGSection={showSVGSection}
               />
-            </InspectorTabPanel>
-
-            <InspectorTabPanel tab="effects" active={activeTab}>
-            {showTextSection && (
-              <Section
-                title="Text Behind Subject"
-                sectionId="text-behind-subject"
-                defaultOpen={false}
-              >
-                <BehindSubjectSection clipId={clipId} />
-              </Section>
-            )}
             </InspectorTabPanel>
 
             <InspectorTabPanel tab="ai" active={activeTab}>
